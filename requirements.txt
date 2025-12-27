@@ -1,0 +1,9 @@
+numpy
+scipy
+torch
+torchvision
+scikit-learn
+tqdm
+ipdb
+matplotlib
+tensorboard
