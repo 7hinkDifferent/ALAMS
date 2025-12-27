@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=1, help="random seed")
     parser.add_argument('--full_init', action='store_true', default=False, help="use full init labeled samples")
-    parser.add_argument('--n_init_labeled', type=int, default=10000, help="number of init labeled samples")
+    parser.add_argument('--n_init_labeled', type=int, default=5000, help="number of init labeled samples") # original 10000
     parser.add_argument('--n_query', type=int, default=1000, help="number of queries per round")
     parser.add_argument('--n_round', type=int, default=10, help="number of rounds")
     parser.add_argument('--dataset_name', type=str, default="MNIST", choices=["MNIST", "FashionMNIST", "SVHN", "CIFAR10"], help="dataset")
@@ -33,7 +33,8 @@ def main():
                                  "KCenterGreedy",
                                  "BALDDropout",
                                  "AdversarialBIM",
-                                 "AdversarialDeepFool"], help="query strategy")
+                                 "AdversarialDeepFool",
+                                 "Sequential"], help="query strategy")
     args = parser.parse_args()
     print(vars(args))
     print()
@@ -60,10 +61,10 @@ def main():
     net = get_net(args.dataset_name, device, logging_root=logging_root)                   # load network
     strategy = get_strategy(args.strategy_name)(dataset, net)  # load strategy
 
-    data_stat['round_0'] = dataset.get_statistics()
 
     # start experiment
     init_labeled_idxs = dataset.initialize_labels(args.n_init_labeled, full_init=args.full_init)
+    data_stat['round_0'] = dataset.get_statistics()
     new_labeled_idxs["round_0"] = {"index": init_labeled_idxs.tolist()}
     print(f"number of labeled pool: {args.n_init_labeled if not args.full_init else dataset.n_pool}")
     print(f"number of unlabeled pool: {dataset.n_pool - (args.n_init_labeled if not args.full_init else dataset.n_pool)}")
@@ -94,8 +95,7 @@ def main():
             strategy.update(query_idxs)
             data_stat[f"round_{rd}"] = dataset.get_statistics()
             # retrain the model
-            net = get_net(args.dataset_name, device, logging_root=logging_root)
-            strategy.reset_net(net)
+            strategy.reset_net()
             strategy.train(round=rd)
 
             # calculate accuracy

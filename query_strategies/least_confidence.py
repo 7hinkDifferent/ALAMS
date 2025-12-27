@@ -7,6 +7,9 @@ class LeastConfidence(Strategy):
 
     def query(self, n):
         unlabeled_idxs, unlabeled_data = self.dataset.get_unlabeled_data()
-        probs = self.predict_prob(unlabeled_data)
+        probs, loss = self.predict_prob(unlabeled_data)
         uncertainties = probs.max(1)[0]
-        return unlabeled_idxs[uncertainties.sort()[1][:n]], {}
+        return unlabeled_idxs[uncertainties.sort()[1][:n]], {
+            "uncertainties": uncertainties.tolist(),
+            "unlabeled_idxs": unlabeled_idxs.tolist(),
+        }

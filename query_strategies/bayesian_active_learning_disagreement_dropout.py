@@ -9,7 +9,7 @@ class BALDDropout(Strategy):
 
     def query(self, n):
         unlabeled_idxs, unlabeled_data = self.dataset.get_unlabeled_data()
-        probs = self.predict_prob_dropout_split(unlabeled_data, n_drop=self.n_drop)
+        probs, loss = self.predict_prob_dropout_split(unlabeled_data, n_drop=self.n_drop)
         pb = probs.mean(0)
         entropy1 = (-pb*torch.log(pb)).sum(1)
         entropy2 = (-probs*torch.log(probs)).sum(2).mean(0)

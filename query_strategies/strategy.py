@@ -17,8 +17,8 @@ class Strategy:
         if neg_idxs:
             self.dataset.labeled_idxs[neg_idxs] = False
 
-    def reset_net(self, net):
-        self.net.reset(net)
+    def reset_net(self):
+        self.net.reset()
 
     def train(self, round=0):
         labeled_idxs, labeled_data = self.dataset.get_labeled_data()

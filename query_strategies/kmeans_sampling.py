@@ -19,4 +19,9 @@ class KMeansSampling(Strategy):
         dis = dis.sum(axis=1)
         q_idxs = np.array([np.arange(embeddings.shape[0])[cluster_idxs==i][dis[cluster_idxs==i].argmin()] for i in range(n)])
 
-        return unlabeled_idxs[q_idxs], {}
+        return unlabeled_idxs[q_idxs], {
+            "unlabeled_idxs": unlabeled_idxs.tolist(),
+            "cluster_idxs": cluster_idxs.tolist(),
+            "selected_unlabeled_idxs": unlabeled_idxs[q_idxs].tolist(),
+            "selected_cluster_idxs": cluster_idxs[q_idxs].tolist(),
+        }

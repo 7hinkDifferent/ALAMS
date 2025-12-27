@@ -76,3 +76,4 @@ Thumbs.db
 *.tmp
 data/
 outputs/
+logs/

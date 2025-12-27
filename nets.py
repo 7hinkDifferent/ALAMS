@@ -17,7 +17,7 @@ class Net:
         self.clf = self.net().to(device)
         self.logging_root = logging_root
         
-    def reset(self, net):
+    def reset(self):
         del self.clf
         self.clf = self.net().to(self.device)
 

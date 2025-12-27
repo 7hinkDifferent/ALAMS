@@ -5,29 +5,29 @@ from nets import Net, MNIST_Net, SVHN_Net, CIFAR10_Net
 from query_strategies import RandomSampling, LeastConfidence, MarginSampling, EntropySampling, \
                              LeastConfidenceDropout, MarginSamplingDropout, EntropySamplingDropout, \
                              KMeansSampling, KCenterGreedy, BALDDropout, \
-                             AdversarialBIM, AdversarialDeepFool
+                             AdversarialBIM, AdversarialDeepFool, Sequential
 
 params = {'MNIST':
-              {'n_epoch': 10, 
+              {'n_epoch': 30, 
             #    'early_stopping': 5,
                'train_args':{'batch_size': 64, 'num_workers': 1},
                'val_args':{'batch_size': 1000, 'num_workers': 1},
                'test_args':{'batch_size': 1000, 'num_workers': 1},
                'optimizer_args':{'lr': 0.01, 'momentum': 0.5}},
           'FashionMNIST':
-              {'n_epoch': 10, 
+              {'n_epoch': 30, 
                'train_args':{'batch_size': 64, 'num_workers': 1},
                 'val_args':{'batch_size': 1000, 'num_workers': 1},
                'test_args':{'batch_size': 1000, 'num_workers': 1},
                'optimizer_args':{'lr': 0.01, 'momentum': 0.5}},
           'SVHN':
-              {'n_epoch': 20, 
+              {'n_epoch': 30, 
                'train_args':{'batch_size': 64, 'num_workers': 1},
                'val_args':{'batch_size': 1000, 'num_workers': 1},
                'test_args':{'batch_size': 1000, 'num_workers': 1},
                'optimizer_args':{'lr': 0.01, 'momentum': 0.5}},
           'CIFAR10':
-              {'n_epoch': 20, 
+              {'n_epoch': 100, 
                'train_args':{'batch_size': 64, 'num_workers': 1},
                'val_args':{'batch_size': 1000, 'num_workers': 1},
                'test_args':{'batch_size': 1000, 'num_workers': 1},
@@ -96,6 +96,8 @@ def get_strategy(name):
         return AdversarialBIM
     elif name == "AdversarialDeepFool":
         return AdversarialDeepFool
+    elif name == "Sequential":
+        return Sequential
     else:
         raise NotImplementedError
     
