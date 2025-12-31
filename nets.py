@@ -9,6 +9,13 @@ import torchvision.models as models
 import os
 from torch.utils.tensorboard import SummaryWriter
 
+def flatten_tensors(tensors):
+    """
+    tensors: iterable of torch.Tensor
+    return: 1D flattened tensor
+    """
+    return torch.cat([t.reshape(-1) for t in tensors])
+
 class Net:
     def __init__(self, net, params, device, logging_root="./logs"):
         self.net = net
@@ -32,7 +39,10 @@ class Net:
 
         loader = DataLoader(train_data, shuffle=True, **self.params['train_args'])
         best_loss = 1e10
+        best_acc = 0.0
         best_epoch = 0
+        train_loss = 0.0
+        train_acc = 0.0
         for epoch in tqdm(range(1, n_epoch+1), ncols=100):
             train_loss = 0.0
             train_acc = 0.0
@@ -61,6 +71,7 @@ class Net:
                 #       }, Validation Accuracy: {val_acc:.4f}")
                 if val_loss < best_loss:
                     best_loss = val_loss
+                    best_acc = val_acc
                     best_epoch = epoch
                     torch.save(self.clf.state_dict(), f'{logging_dir}/best_model.pth')
 
@@ -68,6 +79,50 @@ class Net:
         if val_data is not None:
             self.clf.load_state_dict(torch.load(f'{logging_dir}/best_model.pth', map_location=self.device))
             # print(f"Best model at epoch {best_epoch} with validation loss {best_loss:.4f}")
+
+        # TODO: parameters update, gradients for sample
+
+        return {'train_loss': train_loss, 'train_accuracy': train_acc,
+                'best_val_loss': best_loss, 'best_val_accuracy': best_acc, 'best_epoch': best_epoch}
+
+    def compute_per_sample_gradients(self, data):
+        """
+        x_q: (B, ...)
+        y_q: (B,)
+        return:
+            grads: Tensor of shape (B, P)
+                P = total number of model parameters
+        """
+        self.clf.eval()  # 不更新 BN / Dropout
+        x_q, y_q, idxs = data[:]
+        x_q, y_q = x_q.to(self.device), y_q.to(self.device)
+        grads = []
+
+        for i in range(x_q.size(0)):
+            self.clf.zero_grad()
+
+            xi = x_q[i:i+1]
+            yi = y_q[i:i+1]
+
+            loss = F.cross_entropy(self.clf(xi), yi)
+            loss.backward()
+
+            grad_i = flatten_tensors(
+                p.grad.detach().clone()
+                for p in self.clf.parameters()
+                if p.requires_grad
+            )
+
+            grads.append(grad_i)
+
+        return torch.stack(grads)  # (B, P)
+
+    def get_flattened_params(self):
+        return flatten_tensors(
+            p.detach().clone()
+            for p in self.clf.parameters()
+            if p.requires_grad
+        )
 
     def predict(self, data):
         self.clf.eval()

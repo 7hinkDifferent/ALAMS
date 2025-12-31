@@ -9,6 +9,9 @@ class Strategy:
         self.dataset = dataset
         self.net = net
 
+    def feedback(self, info):
+        pass
+
     def query(self, n):
         pass
 
@@ -23,7 +26,8 @@ class Strategy:
     def train(self, round=0):
         labeled_idxs, labeled_data = self.dataset.get_labeled_data()
         val_data = self.dataset.get_val_data()
-        self.net.train(labeled_data, val_data, round=round)
+        train_results = self.net.train(labeled_data, val_data, round=round)
+        return train_results
 
     def predict(self, data):
         preds, loss = self.net.predict(data)

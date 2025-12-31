@@ -35,6 +35,9 @@ class Data:
         unlabeled_idxs = np.arange(self.n_pool)[~self.labeled_idxs]
         return unlabeled_idxs, self.handler(self.X_train[unlabeled_idxs], self.Y_train[unlabeled_idxs])
     
+    def get_data_by_idxs(self, idxs):
+        return self.handler(self.X_train[idxs], self.Y_train[idxs])
+
     def get_train_data(self):
         return self.labeled_idxs.copy(), self.handler(self.X_train, self.Y_train)
         

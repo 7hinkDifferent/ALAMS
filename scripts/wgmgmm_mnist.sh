@@ -3,5 +3,5 @@ python main.py \
     --n_query 20 \
     --n_init_labeled 100 \
     --dataset_name MNIST \
-    --strategy_name Sequential \
+    --strategy_name WeightedGeometricMeanGMM \
     --seed 1

@@ -11,3 +11,7 @@ from .bayesian_active_learning_disagreement_dropout import BALDDropout
 from .adversarial_bim import AdversarialBIM
 from .adversarial_deepfool import AdversarialDeepFool
 from .sequential import Sequential
+from .weighted_sum import WeightedSumGaussian, WeightedSumGMM
+from .weighted_geometric_mean import WeightedGeometricMeanGaussian, WeightedGeometricMeanGMM
+from .multi_arm_bandit import MultiArmBandit
+from .alams import AdaptiveMixtureStrategiesGaussian, AdaptiveMixtureStrategiesGMM

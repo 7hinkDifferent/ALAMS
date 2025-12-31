@@ -13,7 +13,7 @@ class Sequential(Strategy):
         
         # Compute uncertainty scores
         probs, loss = self.predict_prob(unlabeled_data)
-        uncertainties = probs.max(1)[0]
+        uncertainties = 1 - probs.max(1)[0] # lower probs means more uncertain
         
         # KMeans clustering
         embeddings = self.get_embeddings(unlabeled_data)
@@ -29,7 +29,7 @@ class Sequential(Strategy):
             if cluster_mask.sum() > 0:
                 cluster_samples = np.arange(embeddings.shape[0])[cluster_mask]
                 cluster_uncertainties = uncertainties[cluster_mask]
-                max_uncertainty_idx = cluster_uncertainties.argmin() # argmin not argmax because lower max prob means higher uncertainty
+                max_uncertainty_idx = cluster_uncertainties.argmax()
                 q_idxs.append(cluster_samples[max_uncertainty_idx])
         
         q_idxs = np.array(q_idxs)

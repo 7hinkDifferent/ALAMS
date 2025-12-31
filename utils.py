@@ -5,7 +5,9 @@ from nets import Net, MNIST_Net, SVHN_Net, CIFAR10_Net
 from query_strategies import RandomSampling, LeastConfidence, MarginSampling, EntropySampling, \
                              LeastConfidenceDropout, MarginSamplingDropout, EntropySamplingDropout, \
                              KMeansSampling, KCenterGreedy, BALDDropout, \
-                             AdversarialBIM, AdversarialDeepFool, Sequential
+                             AdversarialBIM, AdversarialDeepFool, \
+                             Sequential, WeightedSumGaussian, WeightedSumGMM, WeightedGeometricMeanGaussian, WeightedGeometricMeanGMM, \
+                                MultiArmBandit, AdaptiveMixtureStrategiesGaussian, AdaptiveMixtureStrategiesGMM
 
 params = {'MNIST':
               {'n_epoch': 30, 
@@ -98,6 +100,20 @@ def get_strategy(name):
         return AdversarialDeepFool
     elif name == "Sequential":
         return Sequential
+    elif name == "WeightedSumGaussian":
+        return WeightedSumGaussian
+    elif name == "WeightedSumGMM":
+        return WeightedSumGMM
+    elif name == "WeightedGeometricMeanGaussian":
+        return WeightedGeometricMeanGaussian
+    elif name == "WeightedGeometricMeanGMM":
+        return WeightedGeometricMeanGMM
+    elif name == "MultiArmBandit":
+        return MultiArmBandit
+    elif name == "AdaptiveMixtureStrategiesGaussian":
+        return AdaptiveMixtureStrategiesGaussian
+    elif name == "AdaptiveMixtureStrategiesGMM":
+        return AdaptiveMixtureStrategiesGMM
     else:
         raise NotImplementedError
     

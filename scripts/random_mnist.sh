@@ -1,7 +1,7 @@
 python main.py \
-    --n_round 10 \
-    --n_query 1000 \
-    --n_init_labeled 5000 \
+    --n_round 20 \
+    --n_query 20 \
+    --n_init_labeled 100 \
     --dataset_name MNIST \
     --strategy_name RandomSampling \
     --seed 1

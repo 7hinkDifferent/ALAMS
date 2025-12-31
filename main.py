@@ -34,7 +34,14 @@ def main():
                                  "BALDDropout",
                                  "AdversarialBIM",
                                  "AdversarialDeepFool",
-                                 "Sequential"], help="query strategy")
+                                 "Sequential",
+                                 "WeightedSumGaussian",
+                                 "WeightedSumGMM",
+                                 "WeightedGeometricMeanGaussian",
+                                 "WeightedGeometricMeanGMM",
+                                 "MultiArmBandit",
+                                 "AdaptiveMixtureStrategiesGaussian",
+                                 "AdaptiveMixtureStrategiesGMM"], help="query strategy")
     args = parser.parse_args()
     print(vars(args))
     print()
@@ -73,7 +80,7 @@ def main():
 
     # round 0 accuracy
     print("Round 0")
-    strategy.train(round=0)
+    train_results = strategy.train(round=0)
     preds, loss = strategy.predict(dataset.get_test_data())
     accuracy = dataset.cal_test_acc(preds)
     print(f"Round 0 testing accuracy: {accuracy}")
@@ -84,11 +91,15 @@ def main():
         for rd in range(1, args.n_round+1):
             print(f"Round {rd}")
 
+            # feedback with train results
+            feedback_meta = strategy.feedback(train_results)
+
             # query
-            query_idxs, meta = strategy.query(args.n_query)
+            query_idxs, query_meta = strategy.query(args.n_query)
             new_labeled_idxs[f"round_{rd}"] = {
                 "index": query_idxs.tolist(),
-                **meta
+                "feedback": feedback_meta or {},
+                "query": query_meta or {},
             }
 
             # update labels
@@ -96,7 +107,7 @@ def main():
             data_stat[f"round_{rd}"] = dataset.get_statistics()
             # retrain the model
             strategy.reset_net()
-            strategy.train(round=rd)
+            train_results = strategy.train(round=rd)
 
             # calculate accuracy
             preds, loss = strategy.predict(dataset.get_test_data())
