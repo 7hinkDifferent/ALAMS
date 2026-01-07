@@ -63,8 +63,7 @@ class Net:
             writer.add_scalar(f'round_{round}/Train_Accuracy', train_acc, epoch)
 
             if val_data is not None:
-                preds, val_loss = self.predict(val_data)
-                val_acc = (preds == val_data.Y).sum().item() / len(val_data)
+                preds, val_acc, val_loss = self.predict(val_data)
                 writer.add_scalar(f'round_{round}/Val_Loss', val_loss, epoch)
                 writer.add_scalar(f'round_{round}/Val_Accuracy', val_acc, epoch)
                 # print(f"Epoch {epoch}: Validation Loss: {val_loss:.4f
@@ -80,8 +79,6 @@ class Net:
             self.clf.load_state_dict(torch.load(f'{logging_dir}/best_model.pth', map_location=self.device))
             # print(f"Best model at epoch {best_epoch} with validation loss {best_loss:.4f}")
 
-        # TODO: parameters update, gradients for sample
-
         return {'train_loss': train_loss, 'train_accuracy': train_acc,
                 'best_val_loss': best_loss, 'best_val_accuracy': best_acc, 'best_epoch': best_epoch}
 
@@ -94,17 +91,15 @@ class Net:
                 P = total number of model parameters
         """
         self.clf.eval()  # 不更新 BN / Dropout
-        x_q, y_q, idxs = data[:]
-        x_q, y_q = x_q.to(self.device), y_q.to(self.device)
         grads = []
 
-        for i in range(x_q.size(0)):
+        for xi, yi, _ in data:
+            x_q = xi.unsqueeze(0).to(self.device)  # (1, ...)
+            y_q = yi.unsqueeze(0).to(self.device)  # (1,)
             self.clf.zero_grad()
-
-            xi = x_q[i:i+1]
-            yi = y_q[i:i+1]
-
-            loss = F.cross_entropy(self.clf(xi), yi)
+            
+            out, e1 = self.clf(x_q)
+            loss = F.cross_entropy(out, y_q)
             loss.backward()
 
             grad_i = flatten_tensors(
@@ -129,6 +124,7 @@ class Net:
         preds = torch.zeros(len(data), dtype=data.Y.dtype)
         loader = DataLoader(data, shuffle=False, **self.params['test_args'])
         loss = 0.0
+        correct = 0
         with torch.no_grad():
             for x, y, idxs in loader:
                 x, y = x.to(self.device), y.to(self.device)
@@ -136,14 +132,17 @@ class Net:
                 pred = out.max(1)[1]
                 preds[idxs] = pred.cpu()
                 loss += F.cross_entropy(out, y).item() * x.shape[0]
+                correct += (pred == y).sum().item()
         loss /= len(data)
-        return preds, loss
+        acc = correct / len(data)
+        return preds, acc, loss
     
     def predict_prob(self, data):
         self.clf.eval()
         probs = torch.zeros([len(data), len(np.unique(data.Y))])
         loader = DataLoader(data, shuffle=False, **self.params['test_args'])
         loss = 0.0
+        correct = 0
         with torch.no_grad():
             for x, y, idxs in loader:
                 x, y = x.to(self.device), y.to(self.device)
@@ -151,14 +150,17 @@ class Net:
                 prob = F.softmax(out, dim=1)
                 probs[idxs] = prob.cpu()
                 loss += F.cross_entropy(out, y).item() * x.shape[0]
+                correct += (out.max(1)[1] == y).sum().item()
         loss /= len(data)
-        return probs, loss
+        acc = correct / len(data)
+        return probs, acc, loss
     
     def predict_prob_dropout(self, data, n_drop=10):
         self.clf.train()
         probs = torch.zeros([len(data), len(np.unique(data.Y))])
         loader = DataLoader(data, shuffle=False, **self.params['test_args'])
         loss = 0.0
+        correct = 0
         for i in range(n_drop):
             with torch.no_grad():
                 for x, y, idxs in loader:
@@ -167,15 +169,18 @@ class Net:
                     prob = F.softmax(out, dim=1)
                     probs[idxs] += prob.cpu()
                     loss += F.cross_entropy(out, y).item() * x.shape[0]
+                    correct += (out.max(1)[1] == y).sum().item()
         loss /= (len(data) * n_drop)
         probs /= n_drop
-        return probs, loss
+        acc = correct / (len(data) * n_drop)
+        return probs, acc, loss
     
     def predict_prob_dropout_split(self, data, n_drop=10):
         self.clf.train()
         probs = torch.zeros([n_drop, len(data), len(np.unique(data.Y))])
         loader = DataLoader(data, shuffle=False, **self.params['test_args'])
         loss = [0.0] * n_drop
+        correct = [0] * n_drop
         for i in range(n_drop):
             with torch.no_grad():
                 for x, y, idxs in loader:
@@ -184,9 +189,11 @@ class Net:
                     prob = F.softmax(out, dim=1)
                     probs[i][idxs] += prob.cpu()
                     loss[i] += F.cross_entropy(out, y).item() * x.shape[0]
+                    correct[i] += (out.max(1)[1] == y).sum().item()
         for i in range(n_drop):
             loss[i] /= len(data)
-        return probs, loss
+            correct[i] /= len(data)
+        return probs, correct, loss
     
     def get_embeddings(self, data):
         self.clf.eval()

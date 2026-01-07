@@ -30,22 +30,17 @@ class Strategy:
         return train_results
 
     def predict(self, data):
-        preds, loss = self.net.predict(data)
-        return preds, loss
+        return self.net.predict(data)
 
     def predict_prob(self, data):
-        probs, loss = self.net.predict_prob(data)
-        return probs, loss
+        return self.net.predict_prob(data)
 
     def predict_prob_dropout(self, data, n_drop=10):
-        probs, loss = self.net.predict_prob_dropout(data, n_drop=n_drop)
-        return probs, loss
-
+        return self.net.predict_prob_dropout(data, n_drop=n_drop)
+    
     def predict_prob_dropout_split(self, data, n_drop=10):
-        probs, loss = self.net.predict_prob_dropout_split(data, n_drop=n_drop)
-        return probs, loss
+        return self.net.predict_prob_dropout_split(data, n_drop=n_drop)
     
     def get_embeddings(self, data):
-        embeddings = self.net.get_embeddings(data)
-        return embeddings
+        return self.net.get_embeddings(data)
 

@@ -86,7 +86,7 @@ class AdaptiveMixtureStrategiesGaussian(Strategy):
         unlabeled_idxs, unlabeled_data = self.dataset.get_unlabeled_data()
         
         # Compute uncertainty scores
-        probs, loss = self.predict_prob(unlabeled_data)
+        probs, acc, loss = self.predict_prob(unlabeled_data)
         uncertainties = 1 - probs.max(1)[0]
 
         # Compute kmeans gmm scores
@@ -101,11 +101,9 @@ class AdaptiveMixtureStrategiesGaussian(Strategy):
         # use probabilistic sampling based on expected scores
         q_idxs = np.random.choice(unlabeled_idxs, size=n, replace=False, p=combined_scores/combined_scores.sum())
 
-        selected_idxs = unlabeled_idxs[q_idxs]
-
         # Strategy attribution info (n_strategy x n_samples)
-        self.credit_mapping = np.zeros((self.strategy_count, len(selected_idxs)))
-        for i in range(len(selected_idxs)):
+        self.credit_mapping = np.zeros((self.strategy_count, len(q_idxs)))
+        for i in range(len(q_idxs)):
             self.credit_mapping[0][i] = uncertainties.numpy()[i]
             self.credit_mapping[1][i] = kmeans_gaussian_scores_values[i]
         # normalize credit mapping along strategies
@@ -116,12 +114,12 @@ class AdaptiveMixtureStrategiesGaussian(Strategy):
         #     if total != 0:
         #         self.credit_mapping[:, i] = self.credit_mapping[:, i] / total
 
-        return selected_idxs, {
+        return q_idxs, {
             "unlabeled_idxs": unlabeled_idxs.tolist(),
             "uncertainties": uncertainties.tolist(),
             "kmeans_gaussian_scores": kmeans_gaussian_scores_values.tolist(),
             "combined_scores": combined_scores.tolist(),
-            "selected_unlabeled_idxs": selected_idxs.tolist(),
+            "selected_unlabeled_idxs": q_idxs.tolist(),
             "score_weights": self.scores.tolist(),
             "credit_mapping": self.credit_mapping.tolist(),
             **cluster_info
@@ -196,7 +194,7 @@ class AdaptiveMixtureStrategiesGMM(Strategy):
         unlabeled_idxs, unlabeled_data = self.dataset.get_unlabeled_data()
         
         # Compute uncertainty scores
-        probs, loss = self.predict_prob(unlabeled_data)
+        probs, acc, loss = self.predict_prob(unlabeled_data)
         uncertainties = 1 - probs.max(1)[0]
 
         # Compute kmeans gmm scores
@@ -211,11 +209,9 @@ class AdaptiveMixtureStrategiesGMM(Strategy):
         # use probabilistic sampling based on expected scores
         q_idxs = np.random.choice(unlabeled_idxs, size=n, replace=False, p=combined_scores/combined_scores.sum())
 
-        selected_idxs = unlabeled_idxs[q_idxs]
-
         # Strategy attribution info (n_strategy x n_samples)
-        self.credit_mapping = np.zeros((self.strategy_count, len(selected_idxs)))
-        for i in range(len(selected_idxs)):
+        self.credit_mapping = np.zeros((self.strategy_count, len(q_idxs)))
+        for i in range(len(q_idxs)):
             self.credit_mapping[0][i] = uncertainties.numpy()[i]
             self.credit_mapping[1][i] = kmeans_gmm_scores_values[i]
         # normalize credit mapping along strategies
@@ -226,12 +222,12 @@ class AdaptiveMixtureStrategiesGMM(Strategy):
         #     if total != 0:
         #         self.credit_mapping[:, i] = self.credit_mapping[:, i] / total
 
-        return selected_idxs, {
+        return q_idxs, {
             "unlabeled_idxs": unlabeled_idxs.tolist(),
             "uncertainties": uncertainties.tolist(),
             "kmeans_gmm_scores": kmeans_gmm_scores_values.tolist(),
             "combined_scores": combined_scores.tolist(),
-            "selected_unlabeled_idxs": selected_idxs.tolist(),
+            "selected_unlabeled_idxs": q_idxs.tolist(),
             "score_weights": self.scores.tolist(),
             "credit_mapping": self.credit_mapping.tolist(),
             **cluster_info

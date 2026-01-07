@@ -12,7 +12,7 @@ class Sequential(Strategy):
         unlabeled_idxs, unlabeled_data = self.dataset.get_unlabeled_data()
         
         # Compute uncertainty scores
-        probs, loss = self.predict_prob(unlabeled_data)
+        probs, acc, loss = self.predict_prob(unlabeled_data)
         uncertainties = 1 - probs.max(1)[0] # lower probs means more uncertain
         
         # KMeans clustering

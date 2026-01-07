@@ -4,6 +4,7 @@ import torch
 from utils import get_dataset, get_net, get_strategy
 import datetime
 import os, json
+import copy
 
 def set_seed(seed):
     np.random.seed(seed)
@@ -81,7 +82,7 @@ def main():
     # round 0 accuracy
     print("Round 0")
     train_results = strategy.train(round=0)
-    preds, loss = strategy.predict(dataset.get_test_data())
+    preds, acc, loss = strategy.predict(dataset.get_test_data())
     accuracy = dataset.cal_test_acc(preds)
     print(f"Round 0 testing accuracy: {accuracy}")
     metrics["round_0"] = {'test_accuracy': accuracy, 'test_loss': loss}
@@ -98,8 +99,8 @@ def main():
             query_idxs, query_meta = strategy.query(args.n_query)
             new_labeled_idxs[f"round_{rd}"] = {
                 "index": query_idxs.tolist(),
-                "feedback": feedback_meta or {},
-                "query": query_meta or {},
+                "feedback": copy.deepcopy(feedback_meta) or {},
+                "query": copy.deepcopy(query_meta) or {},
             }
 
             # update labels
@@ -110,18 +111,28 @@ def main():
             train_results = strategy.train(round=rd)
 
             # calculate accuracy
-            preds, loss = strategy.predict(dataset.get_test_data())
+            preds, acc, loss = strategy.predict(dataset.get_test_data())
             accuracy = dataset.cal_test_acc(preds)
             print(f"Round {rd} testing accuracy: {accuracy}")
             metrics[f"round_{rd}"] = {'test_accuracy': accuracy, 'test_loss': loss}
 
     # save results
-    with open(f'{logging_root}/new_labeled_idxs.json', 'w') as f:
-        json.dump(new_labeled_idxs, f)
-    with open(f'{logging_root}/data_stat.json', 'w') as f:
-        json.dump(data_stat, f)
-    with open(f'{logging_root}/metrics.json', 'w') as f:
-        json.dump(metrics, f)
+    try:
+        with open(f'{logging_root}/new_labeled_idxs.json', 'w') as f:
+            json.dump(new_labeled_idxs, f)
+        with open(f'{logging_root}/data_stat.json', 'w') as f:
+            json.dump(data_stat, f)
+        with open(f'{logging_root}/metrics.json', 'w') as f:
+            json.dump(metrics, f)
+    except Exception as e:
+        print(f"Error saving results: {e}")
+        # save with txt
+        with open(f'{logging_root}/new_labeled_idxs.txt', 'w') as f:
+            f.write(str(new_labeled_idxs))
+        with open(f'{logging_root}/data_stat.txt', 'w') as f:
+            f.write(str(data_stat))
+        with open(f'{logging_root}/metrics.txt', 'w') as f:
+            f.write(str(metrics))
 
 
 if __name__ == '__main__':

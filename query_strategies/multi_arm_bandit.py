@@ -63,7 +63,7 @@ class MultiArmBandit(Strategy):
     def query(self, n):
         info = {
             "selected_strategies": 0,
-            "strategy_scores": 0.0,
+            "strategy_scores": [0.0],
         }
         # cold-start: query equal number of samples from each strategy
         for i in range(len(self.strategies)):
@@ -72,11 +72,12 @@ class MultiArmBandit(Strategy):
                 self.records[i]["count"] += 1
                 self.total_count += 1
                 self.last_selected_strategy = i
-                return q_idxs, info.update({
-                    "selected_strategies": [i],
+                info.update({
+                    "selected_strategies": i,
                     "strategy_scores": [0.0],
                     **meta
                 })
+                return q_idxs, info
         
         # select strategy based on UCB
         ucb_values = []
@@ -97,8 +98,8 @@ class MultiArmBandit(Strategy):
         self.total_count += 1
         self.last_selected_strategy = selected_strategy
         info.update({
-            "selected_strategies": [selected_strategy],
-            "strategy_scores": [ucb_values[selected_strategy]],
+            "selected_strategies": int(selected_strategy),
+            "strategy_scores": ucb_values[selected_strategy].tolist(),
             "all_scores": ucb_values.tolist(),
             "exploitation_values": exploitation_values,
             "exploration_values": exploration_values,
