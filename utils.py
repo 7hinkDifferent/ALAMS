@@ -66,7 +66,7 @@ def get_net(name, device, logging_root="./logs"):
     elif name == 'SVHN':
         return Net(SVHN_Net, params[name], device, logging_root=logging_root)
     elif name == 'CIFAR10':
-        return Net(CIFAR10_Net, params[name], device)
+        return Net(CIFAR10_Net, params[name], device, logging_root=logging_root)
     else:
         raise NotImplementedError
     

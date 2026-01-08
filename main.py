@@ -87,22 +87,17 @@ def main():
     print(f"Round 0 testing accuracy: {accuracy}")
     metrics["round_0"] = {'test_accuracy': accuracy, 'test_loss': loss}
 
+    # additional feedback after initial training
+    strategy.feedback(train_results)
+
     if not args.full_init:
 
         for rd in range(1, args.n_round+1):
             print(f"Round {rd}")
 
-            # feedback with train results
-            feedback_meta = strategy.feedback(train_results)
-
             # query
             query_idxs, query_meta = strategy.query(args.n_query)
-            new_labeled_idxs[f"round_{rd}"] = {
-                "index": query_idxs.tolist(),
-                "feedback": copy.deepcopy(feedback_meta) or {},
-                "query": copy.deepcopy(query_meta) or {},
-            }
-
+            
             # update labels
             strategy.update(query_idxs)
             data_stat[f"round_{rd}"] = dataset.get_statistics()
@@ -115,6 +110,16 @@ def main():
             accuracy = dataset.cal_test_acc(preds)
             print(f"Round {rd} testing accuracy: {accuracy}")
             metrics[f"round_{rd}"] = {'test_accuracy': accuracy, 'test_loss': loss}
+
+
+            # feedback with train results
+            feedback_meta = strategy.feedback(train_results)
+
+            new_labeled_idxs[f"round_{rd}"] = {
+                "index": query_idxs.tolist(),
+                "feedback": copy.deepcopy(feedback_meta) or {},
+                "query": copy.deepcopy(query_meta) or {},
+            }
 
     # save results
     try:

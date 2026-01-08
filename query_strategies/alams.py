@@ -170,6 +170,8 @@ class AdaptiveMixtureStrategiesGMM(Strategy):
                 # update expected scores with exponential weights
                 delta = self.credit_mapping.dot(credits)  # (strategy count, )
                 self.scores = np.array(self.scores) * np.exp(self.update_rate * delta)
+                # TODO: normalize scores
+                # self.scores = self.scores / self.scores.sum()
 
                 self.old_params = new_params  # update old params
 
